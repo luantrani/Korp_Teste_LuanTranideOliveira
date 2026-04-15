@@ -1,0 +1,17 @@
+# .NET
+dir*/
+obj*/
+*.db
+*.mdf
+*.ldf
+.vs/
+*.user
+*.suo
+*.log
+
+# Node
+node_modules/
+dist/
+
+# Editor
+.vscode/
