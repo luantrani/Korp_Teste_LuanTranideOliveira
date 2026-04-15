@@ -1,14 +1,22 @@
 # Frontend Angular
 
-Esta pasta receberá a aplicação Angular para:
+Aplicação Angular para gestão de produtos e notas fiscais.
 
-- cadastro de produtos
-- criação de notas fiscais
-- impressão de notas fiscais
-- consumo dos microsserviços do backend
+## Estrutura inicial
+
+- `src/app/app.module.ts`: módulo principal
+- `src/app/app.component.ts`: componente raiz
+- `src/environments`: configuração de ambiente
+- `package.json`: dependências e scripts
+
+## Como rodar
+
+1. Instale as dependências com `npm install`
+2. Inicie o servidor com `npm start`
+3. Acesse `http://localhost:4200`
 
 ## Próximo passo
 
-1. Criar aplicação Angular em `frontend/`
-2. Implementar telas de produto e nota fiscal
-3. Consumir endpoints do backend em `backend/src/EstoqueService` e `backend/src/FaturamentoService`
+- Adicionar formulários de cadastro de produtos
+- Listar produtos do serviço de estoque
+- Criar notas fiscais com itens e impressão

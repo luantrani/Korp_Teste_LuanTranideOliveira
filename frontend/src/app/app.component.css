@@ -1,0 +1,20 @@
+.app-container {
+  padding: 16px;
+}
+
+h1 {
+  margin-bottom: 8px;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+section {
+  padding: 16px;
+  border-radius: 12px;
+  background: #f5f7ff;
+  border: 1px solid #dfe4f1;
+}

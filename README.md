@@ -13,7 +13,7 @@ Projeto de exemplo para um sistema de notas fiscais com microsserviços em C#.
 
 - `backend/src/EstoqueService`: serviço REST para controle de produtos e saldos.
 - `backend/src/FaturamentoService`: serviço REST para gestão de notas fiscais.
-- `frontend`: placeholder inicial para futura aplicação Angular.
+- `frontend`: scaffold inicial da aplicação Angular com componente raiz e configuração de build.
 
 ## Próximo passo
 
