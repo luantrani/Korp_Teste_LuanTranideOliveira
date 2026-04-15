@@ -38,19 +38,26 @@ namespace FaturamentoService.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateNota(NotaFiscal nota)
+        public async Task<IActionResult> CreateNota(CreateNotaFiscalRequest request)
         {
-            if (nota.Itens == null || !nota.Itens.Any())
+            if (request.Itens == null || !request.Itens.Any())
             {
                 return BadRequest("A nota deve conter pelo menos um item.");
             }
 
-            var ultimaNumeracao = await _context.NotasFiscais.MaxAsync(n => (int?)n.Numeracao) ?? 0;
-            nota.Numeracao = ultimaNumeracao + 1;
-            nota.Status = "Aberta";
-            nota.CriadoEm = DateTime.UtcNow;
+            if (request.Itens.Any(i => i.Quantidade <= 0))
+            {
+                return BadRequest("A quantidade de cada item deve ser maior que zero.");
+            }
 
-            foreach (var item in nota.Itens)
+            var produtoIds = request.Itens.Select(i => i.ProdutoId).ToList();
+            if (produtoIds.Distinct().Count() != produtoIds.Count)
+            {
+                return BadRequest("Não é permitido adicionar o mesmo produto mais de uma vez em uma nota.");
+            }
+
+            var produtos = new Dictionary<int, ProdutoDto>();
+            foreach (var item in request.Itens)
             {
                 var produto = await _estoqueClient.GetProdutoAsync(item.ProdutoId);
                 if (produto == null)
@@ -62,15 +69,34 @@ namespace FaturamentoService.Controllers
                 {
                     return BadRequest($"Saldo insuficiente para o produto {produto.Codigo}.");
                 }
+
+                produtos[item.ProdutoId] = produto;
             }
 
-            foreach (var item in nota.Itens)
+            var ultimaNumeracao = await _context.NotasFiscais.MaxAsync(n => (int?)n.Numeracao) ?? 0;
+            var nota = new NotaFiscal
+            {
+                Numeracao = ultimaNumeracao + 1,
+                Status = "Aberta",
+                CriadoEm = DateTime.UtcNow,
+                Itens = request.Itens.Select(i => new ItemNotaFiscal
+                {
+                    ProdutoId = i.ProdutoId,
+                    Quantidade = i.Quantidade
+                }).ToList()
+            };
+
+            var atualizados = new List<ItemNotaFiscalRequest>();
+            foreach (var item in request.Itens)
             {
                 var ok = await _estoqueClient.AjustarSaldoAsync(item.ProdutoId, -item.Quantidade);
                 if (!ok)
                 {
-                    return StatusCode(502, "Erro ao atualizar saldo no serviço de estoque.");
+                    await RollbackEstoqueAsync(atualizados);
+                    return StatusCode(502, "Falha ao atualizar o estoque. A operação foi revertida quando possível.");
                 }
+
+                atualizados.Add(item);
             }
 
             _context.NotasFiscais.Add(nota);
@@ -95,6 +121,14 @@ namespace FaturamentoService.Controllers
             nota.Status = "Fechada";
             await _context.SaveChangesAsync();
             return Ok(new { mensagem = "Nota fiscal impressa e status atualizado para Fechada." });
+        }
+
+        private async Task RollbackEstoqueAsync(List<ItemNotaFiscalRequest> itens)
+        {
+            foreach (var item in itens)
+            {
+                await _estoqueClient.AjustarSaldoAsync(item.ProdutoId, item.Quantidade);
+            }
         }
     }
 }
